@@ -4,6 +4,8 @@
 
 # MCP Local RAG
 
+Fork of [shinpr/mcp-local-rag](https://github.com/shinpr/mcp-local-rag).
+
 [![GitHub
 stars](https://img.shields.io/github/stars/shinpr/mcp-local-rag?style=social)](https://github.com/shinpr/mcp-local-rag)
 [![npm
