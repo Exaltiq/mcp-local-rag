@@ -14,9 +14,6 @@ importers:
       '@lancedb/lancedb':
         specifier: ^0.40.0
         version: 0.40.0(@types/node@26.6.5)(apache-arrow@18.1.0)
-      '@modelcontextprotocol/client':
-        specifier: 2.3.1
-        version: 2.3.1
       '@modelcontextprotocol/server':
         specifier: 2.3.1
         version: 2.3.1
@@ -42,6 +39,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.5.15
         version: 2.5.15
+      '@modelcontextprotocol/client':
+        specifier: 2.3.1
+        version: 2.3.1
       '@types/jsdom':
         specifier: ^30.0.0
         version: 30.0.0
