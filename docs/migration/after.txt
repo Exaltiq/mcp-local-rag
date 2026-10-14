@@ -1,0 +1,12 @@
+v22.14.0
+
+RUN  v5.0.4 /workspace
+
+2026-10-14 09:12:01.570525073 [E:onnxruntime:, sequential_executor.cc:671 ExecuteKernel] Non-zero status code returned while running Add node. Name:'/embeddings/Add_1' Status Message: /onnxruntime_src/onnxruntime/core/providers/cpu/math/element_wise_ops.h:583 void onnxruntime::BroadcastIterator::Append(ptrdiff_t, ptrdiff_t) axis == 1 || axis == largest was false. Attempting to broadcast an axis by a dimension other than 1. 512 by 902
+
+
+ Test Files  109 passed | 1 skipped (110)
+      Tests  1806 passed | 6 skipped (1812)
+   Start at  09:10:42
+   Duration  81.14s (tests 98%, import 2%, transform 1%)
+
