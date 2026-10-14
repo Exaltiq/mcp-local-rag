@@ -32,7 +32,7 @@ export function parseChunkMinLength(value: string | undefined): ParseResult<numb
   if (!value) {
     return { value: undefined }
   }
-  const parsed = Number.parseInt(value, 10)
+  const parsed = /^\d+$/.test(value) ? Number(value) : Number.NaN
   if (Number.isNaN(parsed) || parsed < 1 || parsed > MAX_CHUNK_MIN_LENGTH) {
     const warning = `Invalid CHUNK_MIN_LENGTH value: "${value.slice(0, 100)}". Expected integer between 1 and ${MAX_CHUNK_MIN_LENGTH}. Ignoring.`
     return { value: undefined, warning }
@@ -163,11 +163,14 @@ async function resolveRoots(env: NodeJS.ProcessEnv, cwd: string): Promise<Resolv
 
 function resolveMaxFileSize(env: NodeJS.ProcessEnv): { value: number; warning?: string } {
   const raw = env['MAX_FILE_SIZE']
-  const parsed = raw ? Number(raw) : DEFAULT_MAX_FILE_SIZE
+  if (!raw) {
+    return { value: DEFAULT_MAX_FILE_SIZE }
+  }
+  const parsed = /^\d+$/.test(raw) ? Number(raw) : Number.NaN
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > MAX_FILE_SIZE_LIMIT) {
     return {
       value: DEFAULT_MAX_FILE_SIZE,
-      warning: `Invalid MAX_FILE_SIZE value: "${raw?.slice(0, 100)}". Expected integer between 1 and ${MAX_FILE_SIZE_LIMIT}. Using default (${DEFAULT_MAX_FILE_SIZE}).`,
+      warning: `Invalid MAX_FILE_SIZE value: "${raw.slice(0, 100)}". Expected integer between 1 and ${MAX_FILE_SIZE_LIMIT}. Using default (${DEFAULT_MAX_FILE_SIZE}).`,
     }
   }
   return { value: parsed }

@@ -13,7 +13,11 @@ import {
 } from '../ingest/file.js'
 import { DocumentParser } from '../parser/index.js'
 import type { BaseDirsConfig, BaseDirsConfigWarning } from '../utils/base-dirs.js'
-import { DEFAULT_MAX_FILE_SIZE, MAX_CHUNK_MIN_LENGTH } from '../utils/limits.js'
+import {
+  DEFAULT_MAX_FILE_SIZE,
+  MAX_CHUNK_MIN_LENGTH,
+  MAX_FILE_SIZE_LIMIT,
+} from '../utils/limits.js'
 import type { QualityProfile } from '../utils/visual-profile.js'
 import type { VectorStore } from '../vectordb/index.js'
 import {
@@ -115,6 +119,21 @@ function requireCountFlag(args: string[], flagIndex: number, flag: string): numb
     process.exit(1)
   }
   return Number.parseInt(raw, 10)
+}
+
+function readIntegerEnvOrExit(name: string, max: number): number | undefined {
+  const raw = process.env[name]
+  if (!raw) {
+    return undefined
+  }
+  const value = /^\d+$/.test(raw) ? Number(raw) : Number.NaN
+  if (!(value >= 1 && value <= max)) {
+    console.error(
+      `Invalid ${name} value: "${raw.slice(0, 100)}". Expected integer between 1 and ${max}.`
+    )
+    process.exit(1)
+  }
+  return value
 }
 
 /** Reject an unknown flag, or a second positional path. */
@@ -222,14 +241,10 @@ export async function resolveConfig(
 
   const maxFileSize =
     ingestOptions.maxFileSize ??
-    (process.env['MAX_FILE_SIZE']
-      ? Number.parseInt(process.env['MAX_FILE_SIZE'], 10)
-      : INGEST_DEFAULTS.maxFileSize)
+    readIntegerEnvOrExit('MAX_FILE_SIZE', MAX_FILE_SIZE_LIMIT) ??
+    INGEST_DEFAULTS.maxFileSize
   const chunkMinLength =
-    ingestOptions.chunkMinLength ??
-    (process.env['CHUNK_MIN_LENGTH']
-      ? Number.parseInt(process.env['CHUNK_MIN_LENGTH'], 10)
-      : undefined)
+    ingestOptions.chunkMinLength ?? readIntegerEnvOrExit('CHUNK_MIN_LENGTH', MAX_CHUNK_MIN_LENGTH)
 
   // Validate maxFileSize range
   const maxFileSizeError = validateMaxFileSize(maxFileSize)
