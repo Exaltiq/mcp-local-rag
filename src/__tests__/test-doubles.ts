@@ -43,6 +43,22 @@ export function expectError(value: unknown): Error {
   return value
 }
 
+/**
+ * Context the v2 `tools/call` wrapper reads when a test invokes the registered
+ * handler directly. The SDK calls `ctx.mcpReq.requestState()` before the
+ * application handler; an unset state is the no-resume case.
+ */
+export function toolsCallContext(): {
+  mcpReq: { requestState: () => undefined; signal: AbortSignal }
+} {
+  return {
+    mcpReq: {
+      requestState: () => undefined,
+      signal: new AbortController().signal,
+    },
+  }
+}
+
 /** Narrow a value to `ctor`, failing the test when it is not an instance. */
 export function expectInstanceOf<T>(value: unknown, ctor: new (...args: never[]) => T): T {
   expect(value).toBeInstanceOf(ctor)

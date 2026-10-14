@@ -7,7 +7,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { DocumentParser, ValidationError } from '../../parser/index.js'
 import { RAGServer } from '../../server/index.js'
 import { testModelCacheDir, withTestDevice } from '../test-device.js'
-import { asDouble, expectError, privateMembers } from '../test-doubles.js'
+import { asDouble, expectError, privateMembers, toolsCallContext } from '../test-doubles.js'
 
 // ============================================
 // Test Configuration
@@ -37,7 +37,7 @@ interface NetworkMonitor {
 // rather than the handler method directly.
 type RegisteredHandler = (
   request: { method: string; params: { name: string; arguments?: unknown } },
-  extra: { signal: AbortSignal }
+  extra: ReturnType<typeof toolsCallContext>
 ) => Promise<{ content: { type: string; text: string }[] }>
 
 async function dispatchTool(server: RAGServer, name: string, args: unknown): Promise<unknown> {
@@ -48,10 +48,7 @@ async function dispatchTool(server: RAGServer, name: string, args: unknown): Pro
   if (handler === undefined) {
     throw new Error('tools/call handler not registered')
   }
-  return handler(
-    { method: 'tools/call', params: { name, arguments: args } },
-    { signal: new AbortController().signal }
-  )
+  return handler({ method: 'tools/call', params: { name, arguments: args } }, toolsCallContext())
 }
 
 function createNetworkMonitor(): NetworkMonitor {

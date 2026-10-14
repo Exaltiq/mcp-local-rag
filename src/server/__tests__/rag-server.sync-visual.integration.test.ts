@@ -17,7 +17,7 @@ import { join, resolve } from 'node:path'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildPdfWithImageBytes } from '../../__tests__/pdf-image-fixture.js'
 import { withTestDevice } from '../../__tests__/test-device.js'
-import { parseJson, privateMembers } from '../../__tests__/test-doubles.js'
+import { parseJson, privateMembers, toolsCallContext } from '../../__tests__/test-doubles.js'
 import type { Embedder } from '../../embedder/index.js'
 import type { SyncStatusResult } from '../types.js'
 
@@ -148,7 +148,7 @@ async function makeServer(testCase: Case): Promise<ServerInstance> {
 type DispatchResult = { content: { type: string; text: string }[]; isError?: boolean }
 type RegisteredHandler = (
   request: { method: string; params: { name: string; arguments?: unknown } },
-  extra: { signal: AbortSignal }
+  extra: ReturnType<typeof toolsCallContext>
 ) => Promise<DispatchResult>
 
 /** Invoke the registered CallTool dispatcher closure — the real tool boundary. */
@@ -159,10 +159,7 @@ function dispatch(server: ServerInstance, name: string, args: unknown): Promise<
   if (handler === undefined) {
     throw new Error('tools/call handler not registered')
   }
-  return handler(
-    { method: 'tools/call', params: { name, arguments: args } },
-    { signal: new AbortController().signal }
-  )
+  return handler({ method: 'tools/call', params: { name, arguments: args } }, toolsCallContext())
 }
 
 function firstBlock(result: DispatchResult): string {
