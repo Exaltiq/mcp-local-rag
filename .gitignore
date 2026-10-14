@@ -50,3 +50,5 @@ CLAUDE.md
 AGENTS.md
 docs/*
 !docs/schema/
+!docs/migration/
+!docs/migration/**
