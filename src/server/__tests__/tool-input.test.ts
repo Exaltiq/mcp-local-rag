@@ -1,4 +1,4 @@
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
+import { ProtocolError, ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { describe, expect, it } from 'vitest'
 import { expectInstanceOf } from '../../__tests__/test-doubles.js'
 import { MAX_QUERY_LIMIT, MIN_QUERY_LIMIT } from '../../utils/limits.js'
@@ -30,7 +30,7 @@ describe('parseQueryDocumentsInput', () => {
     ['null', null],
     ['array', ['hello']],
   ])('rejects %s arguments', (_label, raw) => {
-    expect(() => parseQueryDocumentsInput(raw)).toThrow(McpError)
+    expect(() => parseQueryDocumentsInput(raw)).toThrow(ProtocolError)
   })
 
   it.each([
@@ -64,8 +64,8 @@ describe('parseQueryDocumentsInput', () => {
       parseQueryDocumentsInput({})
       expect.unreachable('should have thrown')
     } catch (error) {
-      expect(error).toBeInstanceOf(McpError)
-      expect(expectInstanceOf(error, McpError).code).toBe(ErrorCode.InvalidParams)
+      expect(error).toBeInstanceOf(ProtocolError)
+      expect(expectInstanceOf(error, ProtocolError).code).toBe(ProtocolErrorCode.InvalidParams)
     }
   })
 
@@ -170,7 +170,7 @@ describe('parseListFilesInput', () => {
     ['null', null],
     ['array', ['/a']],
   ])('rejects %s arguments', (_label, raw) => {
-    expect(() => parseListFilesInput(raw)).toThrow(McpError)
+    expect(() => parseListFilesInput(raw)).toThrow(ProtocolError)
   })
 
   it('throws InvalidParams error code for malformed scope', () => {
@@ -178,8 +178,8 @@ describe('parseListFilesInput', () => {
       parseListFilesInput({ scope: 42 })
       expect.unreachable('should have thrown')
     } catch (error) {
-      expect(error).toBeInstanceOf(McpError)
-      expect(expectInstanceOf(error, McpError).code).toBe(ErrorCode.InvalidParams)
+      expect(error).toBeInstanceOf(ProtocolError)
+      expect(expectInstanceOf(error, ProtocolError).code).toBe(ProtocolErrorCode.InvalidParams)
     }
   })
 })
@@ -202,7 +202,7 @@ describe('parseIngestDataInput', () => {
   })
 
   it('rejects missing metadata', () => {
-    expect(() => parseIngestDataInput({ content: 'body' })).toThrow(McpError)
+    expect(() => parseIngestDataInput({ content: 'body' })).toThrow(ProtocolError)
   })
 
   it.each([
@@ -235,7 +235,7 @@ describe('parseIngestFileInput', () => {
 
   it.each([undefined, null, {}, { filePath: '' }, { filePath: 1 }])(
     'rejects malformed input %#',
-    (raw) => expect(() => parseIngestFileInput(raw)).toThrow(McpError)
+    (raw) => expect(() => parseIngestFileInput(raw)).toThrow(ProtocolError)
   )
 
   it.each(['true', 1, null])('rejects visual=%j', (visual) => {
@@ -268,7 +268,7 @@ describe('parseDeleteFileInput', () => {
 
   it.each([undefined, null, {}, { filePath: '', source: '' }, { filePath: '/a', source: 's' }])(
     'rejects malformed or non-XOR input %#',
-    (raw) => expect(() => parseDeleteFileInput(raw)).toThrow(McpError)
+    (raw) => expect(() => parseDeleteFileInput(raw)).toThrow(ProtocolError)
   )
 })
 
@@ -287,7 +287,7 @@ describe('parseReadChunkNeighborsInput', () => {
     { filePath: '/a', chunkIndex: 0, before: 51 },
     { filePath: '/a', chunkIndex: 0, after: -1 },
   ])('rejects malformed input %#', (raw) => {
-    expect(() => parseReadChunkNeighborsInput(raw)).toThrow(McpError)
+    expect(() => parseReadChunkNeighborsInput(raw)).toThrow(ProtocolError)
   })
 })
 
@@ -324,7 +324,7 @@ describe('parseSyncStartInput', () => {
     ['null', null],
     ['array', ['/docs/api']],
   ])('rejects %s arguments', (_label, raw) => {
-    expect(() => parseSyncStartInput(raw)).toThrow(McpError)
+    expect(() => parseSyncStartInput(raw)).toThrow(ProtocolError)
   })
 
   // A relative path would be resolved against the server process's working
@@ -344,9 +344,9 @@ describe('parseSyncStartInput', () => {
       parseSyncStartInput({ path: 'private/docs' })
       expect.unreachable('should have thrown')
     } catch (error) {
-      expect(error).toBeInstanceOf(McpError)
-      expect(expectInstanceOf(error, McpError).code).toBe(ErrorCode.InvalidParams)
-      expect(expectInstanceOf(error, McpError).message).not.toContain('private/docs')
+      expect(error).toBeInstanceOf(ProtocolError)
+      expect(expectInstanceOf(error, ProtocolError).code).toBe(ProtocolErrorCode.InvalidParams)
+      expect(expectInstanceOf(error, ProtocolError).message).not.toContain('private/docs')
     }
   })
 
@@ -355,8 +355,8 @@ describe('parseSyncStartInput', () => {
       parseSyncStartInput({ path: 42 })
       expect.unreachable('should have thrown')
     } catch (error) {
-      expect(error).toBeInstanceOf(McpError)
-      expect(expectInstanceOf(error, McpError).code).toBe(ErrorCode.InvalidParams)
+      expect(error).toBeInstanceOf(ProtocolError)
+      expect(expectInstanceOf(error, ProtocolError).code).toBe(ProtocolErrorCode.InvalidParams)
     }
   })
 
@@ -365,7 +365,7 @@ describe('parseSyncStartInput', () => {
       parseSyncStartInput({ path: ['/Users/someone/private/docs'] })
       expect.unreachable('should have thrown')
     } catch (error) {
-      const { message } = expectInstanceOf(error, McpError)
+      const { message } = expectInstanceOf(error, ProtocolError)
       expect(message).not.toContain('/Users/someone/private/docs')
       expect(message).not.toContain('\n')
       expect(message).not.toMatch(/\bat\s+\S+:\d+/)
@@ -401,7 +401,7 @@ describe('parseSyncStatusInput', () => {
     ['null', null],
     ['array', ['abc']],
   ])('rejects %s', (_label, raw) => {
-    expect(() => parseSyncStatusInput(raw)).toThrow(McpError)
+    expect(() => parseSyncStatusInput(raw)).toThrow(ProtocolError)
   })
 
   it('throws InvalidParams error code', () => {
@@ -409,8 +409,8 @@ describe('parseSyncStatusInput', () => {
       parseSyncStatusInput({})
       expect.unreachable('should have thrown')
     } catch (error) {
-      expect(error).toBeInstanceOf(McpError)
-      expect(expectInstanceOf(error, McpError).code).toBe(ErrorCode.InvalidParams)
+      expect(error).toBeInstanceOf(ProtocolError)
+      expect(expectInstanceOf(error, ProtocolError).code).toBe(ProtocolErrorCode.InvalidParams)
     }
   })
 
@@ -432,7 +432,7 @@ describe('parseSyncStatusInput', () => {
   it('accepts an id at the 128-character cap and rejects one past it', () => {
     const atCap = 'a'.repeat(128)
     expect(parseSyncStatusInput({ jobId: atCap })).toEqual({ jobId: atCap })
-    expect(() => parseSyncStatusInput({ jobId: `${atCap}a` })).toThrow(McpError)
+    expect(() => parseSyncStatusInput({ jobId: `${atCap}a` })).toThrow(ProtocolError)
   })
 
   it('rejects a malformed id without echoing it', () => {
@@ -440,7 +440,7 @@ describe('parseSyncStatusInput', () => {
       parseSyncStatusInput({ jobId: 'abc\nUnknown sync job: forged' })
       expect.unreachable('should have thrown')
     } catch (error) {
-      const { message } = expectInstanceOf(error, McpError)
+      const { message } = expectInstanceOf(error, ProtocolError)
       expect(message).not.toContain('forged')
       expect(message).not.toContain('\n')
     }
@@ -451,7 +451,7 @@ describe('parseSyncStatusInput', () => {
       parseSyncStatusInput({ jobId: ['/Users/someone/private/docs'] })
       expect.unreachable('should have thrown')
     } catch (error) {
-      const { message } = expectInstanceOf(error, McpError)
+      const { message } = expectInstanceOf(error, ProtocolError)
       expect(message).not.toContain('/Users/someone/private/docs')
       expect(message).not.toMatch(/\bat\s+\S+:\d+/)
     }

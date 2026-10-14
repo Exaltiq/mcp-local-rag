@@ -1,4 +1,4 @@
-import type { Tool } from '@modelcontextprotocol/sdk/types.js'
+import type { Tool } from '@modelcontextprotocol/server'
 import { describe, expect, it } from 'vitest'
 import { expectString } from '../../__tests__/test-doubles.js'
 import { MAX_QUERY_LIMIT, MIN_QUERY_LIMIT } from '../../utils/limits.js'

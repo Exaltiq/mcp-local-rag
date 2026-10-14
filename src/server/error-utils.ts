@@ -1,5 +1,5 @@
-import type { Annotations } from '@modelcontextprotocol/sdk/types.js'
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
+import type { Annotations } from '@modelcontextprotocol/server'
+import { ProtocolError, ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { getCauseChain, isAppError } from '../utils/errors.js'
 import { isRecord } from '../utils/type-guards.js'
 
@@ -148,18 +148,18 @@ export function logError(context: string, error: unknown): void {
  * NO operation prefix even when `context.prefix` is set. Anything else becomes
  * `InternalError` with the prefix applied. The cause chain is never included.
  */
-export function toMcpError(error: unknown, context: ToMcpErrorContext): McpError {
-  if (error instanceof McpError) {
+export function toMcpError(error: unknown, context: ToMcpErrorContext): ProtocolError {
+  if (error instanceof ProtocolError) {
     return error
   }
   if (isAppError(error)) {
     const code =
       error.kind === 'validation' || error.kind === 'config'
-        ? ErrorCode.InvalidParams
-        : ErrorCode.InternalError
-    return new McpError(code, formatErrorForClient(error))
+        ? ProtocolErrorCode.InvalidParams
+        : ProtocolErrorCode.InternalError
+    return new ProtocolError(code, formatErrorForClient(error))
   }
   const message = formatErrorForClient(error)
   const clientMessage = context.prefix !== undefined ? `${context.prefix}: ${message}` : message
-  return new McpError(ErrorCode.InternalError, clientMessage)
+  return new ProtocolError(ProtocolErrorCode.InternalError, clientMessage)
 }

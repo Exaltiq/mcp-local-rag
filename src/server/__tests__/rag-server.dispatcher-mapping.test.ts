@@ -8,7 +8,7 @@
 
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
+import { ProtocolError, ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { testModelCacheDir, withTestDevice } from '../../__tests__/test-device.js'
 import { expectInstanceOf, privateMembers } from '../../__tests__/test-doubles.js'
@@ -91,14 +91,14 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
     vi.spyOn(embedder, 'embed').mockRejectedValue(new EmbeddingError('embedder exploded'))
 
     await expect(dispatch(server, 'query_documents', { query: 'hi' })).rejects.toMatchObject({
-      code: ErrorCode.InternalError,
+      code: ProtocolErrorCode.InternalError,
     })
     try {
       await dispatch(server, 'query_documents', { query: 'hi' })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err).toBeInstanceOf(McpError)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err).toBeInstanceOf(ProtocolError)
       expect(err.message).toContain('embedder exploded')
       expect(err.message).not.toContain('Failed to')
     }
@@ -116,9 +116,9 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       await dispatch(server, 'ingest_file', { filePath: testFile })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err).toBeInstanceOf(McpError)
-      expect(err.code).toBe(ErrorCode.InternalError)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err).toBeInstanceOf(ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InternalError)
       expect(err.message).toContain('Failed to ingest file: disk full')
     }
   })
@@ -138,9 +138,9 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err).toBeInstanceOf(McpError)
-      expect(err.code).toBe(ErrorCode.InternalError)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err).toBeInstanceOf(ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InternalError)
       expect(err.message).toContain('Failed to ingest data: boom')
     }
   })
@@ -160,9 +160,9 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       await dispatch(server, 'delete_file', { filePath: testFile })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err).toBeInstanceOf(McpError)
-      expect(err.code).toBe(ErrorCode.InternalError)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err).toBeInstanceOf(ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InternalError)
       expect(err.message).toContain('Failed to delete file: boom')
     }
   })
@@ -178,8 +178,8 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       await dispatch(server, 'ingest_file', { filePath: testFile })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err.code).toBe(ErrorCode.InternalError)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InternalError)
       expect(err.message).toContain('Invalid RAG_DTYPE: q9')
       expect(err.message).not.toContain('Failed to ingest file')
     }
@@ -200,8 +200,8 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       await dispatch(server, 'read_chunk_neighbors', { filePath: testFile, chunkIndex: 0 })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err.code).toBe(ErrorCode.InternalError)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InternalError)
       expect(err.message).toContain('lancedb scan failed')
       expect(err.message).not.toContain('Failed to read chunk neighbors')
     }
@@ -219,8 +219,8 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       await dispatch(server, 'read_chunk_neighbors', { filePath: testFile, chunkIndex: 0 })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err.code).toBe(ErrorCode.InternalError)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InternalError)
       expect(err.message).toContain('Failed to read chunk neighbors: unexpected boom')
     }
   })
@@ -231,8 +231,8 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       await dispatch(server, 'read_chunk_neighbors', { filePath: '/x', chunkIndex: -1 })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err.code).toBe(ErrorCode.InvalidParams)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InvalidParams)
       expect(err.message).toContain('chunkIndex must be a non-negative integer')
     }
   })
@@ -242,8 +242,8 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       await dispatch(server, 'delete_file', {})
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err.code).toBe(ErrorCode.InvalidParams)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InvalidParams)
       expect(err.message).toContain('Either filePath or source must be provided')
     }
   })
@@ -263,7 +263,7 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
       await dispatch(server, 'query_documents', { query: 'anything' })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
+      const err = expectInstanceOf(e, ProtocolError)
       // Client: generic DatabaseError message, NOT the internal cause.
       expect(err.message).toContain('Failed to search vectors')
       expect(err.message).not.toContain('LANCE_INTERNAL_DETAIL')
@@ -388,9 +388,9 @@ describe('Config-gate central mapping + status diagnostic block (AC-007)', () =>
       await dispatch(server, 'list_files', {})
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err).toBeInstanceOf(McpError)
-      expect(err.code).toBe(ErrorCode.InvalidParams)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err).toBeInstanceOf(ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InvalidParams)
       expect(err.message).toContain('BASE_DIRS must be a JSON array')
     }
   })
@@ -484,22 +484,24 @@ describe('External mutation guard at the dispatch boundary (SYNC-007)', () => {
     // and `Unknown sync job` can only come from `handleSyncStatus`: both prove
     // the switch reached the new arms.
     await expect(dispatch(server, 'sync_start', { path: 42 })).rejects.toMatchObject({
-      code: ErrorCode.InvalidParams,
+      code: ProtocolErrorCode.InvalidParams,
     })
     try {
       await dispatch(server, 'sync_start', { path: 42 })
       throw new Error('expected throw')
     } catch (e) {
-      expect(expectInstanceOf(e, McpError).message).toContain('path must be a non-empty string')
-      expect(expectInstanceOf(e, McpError).message).not.toContain('Unknown tool')
+      expect(expectInstanceOf(e, ProtocolError).message).toContain(
+        'path must be a non-empty string'
+      )
+      expect(expectInstanceOf(e, ProtocolError).message).not.toContain('Unknown tool')
     }
 
     try {
       await dispatch(server, 'sync_status', { jobId: NEVER_ISSUED_JOB_ID })
       throw new Error('expected throw')
     } catch (e) {
-      const err = expectInstanceOf(e, McpError)
-      expect(err).toBeInstanceOf(McpError)
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err).toBeInstanceOf(ProtocolError)
       expect(err.message).toContain('Unknown sync job')
       expect(err.message).not.toContain('Unknown tool')
     }
@@ -508,7 +510,7 @@ describe('External mutation guard at the dispatch boundary (SYNC-007)', () => {
   it('releases the guard when sync_start is rejected before a job is scheduled', async () => {
     stubEmbedder()
     await expect(dispatch(server, 'sync_start', { path: '   ' })).rejects.toMatchObject({
-      code: ErrorCode.InvalidParams,
+      code: ProtocolErrorCode.InvalidParams,
     })
 
     // A leaked guard here would soft-lock every mutation for the process

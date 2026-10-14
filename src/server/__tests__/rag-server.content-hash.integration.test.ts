@@ -23,7 +23,7 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { lstatSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
+import { ProtocolError, ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { withTestDevice } from '../../__tests__/test-device.js'
 import { expectInstanceOf, parseJson, privateMembers } from '../../__tests__/test-doubles.js'
@@ -345,11 +345,11 @@ describe('ingest_file — the pre-parse read is guarded', () => {
       // answer InvalidParams, and that is the code a client still gets.
       const error = await dispatch(server, 'ingest_file', { filePath: dirPath }).then(
         () => null,
-        (caught: unknown) => expectInstanceOf(caught, McpError)
+        (caught: unknown) => expectInstanceOf(caught, ProtocolError)
       )
 
-      expect(error).toBeInstanceOf(McpError)
-      expect(error?.code).toBe(ErrorCode.InvalidParams)
+      expect(error).toBeInstanceOf(ProtocolError)
+      expect(error?.code).toBe(ProtocolErrorCode.InvalidParams)
       expect(error?.message).toContain('not a regular file')
       expect(readsOf(dirPath)).toBe(0)
     } finally {
@@ -372,11 +372,11 @@ describe('ingest_file — the pre-parse read is guarded', () => {
       try {
         const error = await dispatch(server, 'ingest_file', { filePath: fifoPath }).then(
           () => null,
-          (caught: unknown) => expectInstanceOf(caught, McpError)
+          (caught: unknown) => expectInstanceOf(caught, ProtocolError)
         )
 
-        expect(error).toBeInstanceOf(McpError)
-        expect(error?.code).toBe(ErrorCode.InvalidParams)
+        expect(error).toBeInstanceOf(ProtocolError)
+        expect(error?.code).toBe(ProtocolErrorCode.InvalidParams)
         expect(error?.message).toContain('not a regular file')
         expect(readsOf(fifoPath)).toBe(0)
       } finally {
@@ -394,10 +394,10 @@ describe('ingest_file — the pre-parse read is guarded', () => {
     try {
       const error = await dispatch(server, 'ingest_file', { filePath }).then(
         () => null,
-        (caught: unknown) => expectInstanceOf(caught, McpError)
+        (caught: unknown) => expectInstanceOf(caught, ProtocolError)
       )
 
-      expect(error?.code).toBe(ErrorCode.InvalidParams)
+      expect(error?.code).toBe(ProtocolErrorCode.InvalidParams)
       expect(error?.message).toContain('File size exceeds limit')
       // The bound the old post-parse read position relied on: the whole file must
       // never reach memory.
@@ -417,10 +417,10 @@ describe('ingest_file — the pre-parse read is guarded', () => {
     try {
       const error = await dispatch(server, 'ingest_file', { filePath }).then(
         () => null,
-        (caught: unknown) => expectInstanceOf(caught, McpError)
+        (caught: unknown) => expectInstanceOf(caught, ProtocolError)
       )
 
-      expect(error?.code).toBe(ErrorCode.InvalidParams)
+      expect(error?.code).toBe(ProtocolErrorCode.InvalidParams)
       expect(error?.message).toContain('within a configured base directory')
       // Containment is decided before anything outside the roots is read.
       expect(readsOf(filePath)).toBe(0)

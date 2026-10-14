@@ -119,7 +119,7 @@ describe('AC-009: dtype×PDF protocol regression (mock-based, no real model/Hub/
     vi.doMock('mupdf', mupdfFactory)
     ;({ RAGServer } = await import('../index.js'))
     ;({ EmbeddingError } = await import('../../embedder/index.js'))
-    ;({ McpError, ErrorCode } = await import('@modelcontextprotocol/sdk/types.js'))
+    ;({ McpError, ErrorCode } = await import('@modelcontextprotocol/server'))
 
     // Embedder model load fails (e.g. unavailable dtype), and the model's
     // available-dtype enumeration EXCLUDES the requested dtype → the real

@@ -3,7 +3,7 @@
 // `McpError(InvalidParams)`, without leaking internal diagnostics.
 
 import { isAbsolute } from 'node:path'
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
+import { ProtocolError, ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { MAX_NEIGHBOR_COUNT, MAX_QUERY_LIMIT, MIN_QUERY_LIMIT } from '../utils/limits.js'
 import { CONTENT_FORMATS } from '../utils/raw-data-utils.js'
 import { isInteger, isMemberOf, isRecord } from '../utils/type-guards.js'
@@ -38,12 +38,12 @@ function normalizeScope(scope: unknown): string[] {
     return scope.map((value) => value.trim())
   }
 
-  throw new McpError(ErrorCode.InvalidParams, SCOPE_ERROR)
+  throw new ProtocolError(ProtocolErrorCode.InvalidParams, SCOPE_ERROR)
 }
 
 function asRecord(raw: unknown, label: string): Record<string, unknown> {
   if (!isRecord(raw) || Array.isArray(raw)) {
-    throw new McpError(ErrorCode.InvalidParams, `${label} arguments must be an object`)
+    throw new ProtocolError(ProtocolErrorCode.InvalidParams, `${label} arguments must be an object`)
   }
   return raw
 }
@@ -58,7 +58,7 @@ export function parseQueryDocumentsInput(raw: unknown): QueryDocumentsInput {
   const { query, limit, scope } = obj
 
   if (typeof query !== 'string' || query.trim().length === 0) {
-    throw new McpError(ErrorCode.InvalidParams, 'query must be a non-empty string')
+    throw new ProtocolError(ProtocolErrorCode.InvalidParams, 'query must be a non-empty string')
   }
 
   const input: QueryDocumentsInput = { query }
@@ -74,8 +74,8 @@ export function parseQueryDocumentsInput(raw: unknown): QueryDocumentsInput {
       limit < MIN_QUERY_LIMIT ||
       limit > MAX_QUERY_LIMIT
     ) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
+      throw new ProtocolError(
+        ProtocolErrorCode.InvalidParams,
         `limit must be an integer between ${MIN_QUERY_LIMIT} and ${MAX_QUERY_LIMIT}`
       )
     }
@@ -120,19 +120,22 @@ export function parseIngestDataInput(raw: unknown): IngestDataInput {
   const { content, metadata } = obj
 
   if (typeof content !== 'string' || content.length === 0) {
-    throw new McpError(ErrorCode.InvalidParams, 'content must be a non-empty string')
+    throw new ProtocolError(ProtocolErrorCode.InvalidParams, 'content must be a non-empty string')
   }
 
   const meta = asRecord(metadata, 'ingest_data metadata')
   const { source, format } = meta
 
   if (typeof source !== 'string' || source.trim().length === 0) {
-    throw new McpError(ErrorCode.InvalidParams, 'metadata.source must be a non-empty string')
+    throw new ProtocolError(
+      ProtocolErrorCode.InvalidParams,
+      'metadata.source must be a non-empty string'
+    )
   }
 
   if (typeof format !== 'string' || !isMemberOf(CONTENT_FORMATS, format)) {
-    throw new McpError(
-      ErrorCode.InvalidParams,
+    throw new ProtocolError(
+      ProtocolErrorCode.InvalidParams,
       `metadata.format must be one of: ${CONTENT_FORMATS.join(', ')}`
     )
   }
@@ -143,16 +146,19 @@ export function parseIngestDataInput(raw: unknown): IngestDataInput {
 export function parseIngestFileInput(raw: unknown): IngestFileInput {
   const { filePath, visual, visualQuality } = asRecord(raw, 'ingest_file')
   if (typeof filePath !== 'string' || filePath.trim().length === 0) {
-    throw new McpError(ErrorCode.InvalidParams, 'filePath must be a non-empty string')
+    throw new ProtocolError(ProtocolErrorCode.InvalidParams, 'filePath must be a non-empty string')
   }
   if (visual !== undefined && typeof visual !== 'boolean') {
-    throw new McpError(ErrorCode.InvalidParams, "'visual' must be a boolean if provided")
+    throw new ProtocolError(
+      ProtocolErrorCode.InvalidParams,
+      "'visual' must be a boolean if provided"
+    )
   }
   const hasQualityProfile =
     typeof visualQuality === 'string' && isMemberOf(QUALITY_PROFILES, visualQuality)
   if (visualQuality !== undefined && visualQuality !== '' && !hasQualityProfile) {
-    throw new McpError(
-      ErrorCode.InvalidParams,
+    throw new ProtocolError(
+      ProtocolErrorCode.InvalidParams,
       "'visualQuality' must be 'fast' or 'quality' if provided"
     )
   }
@@ -173,7 +179,10 @@ export function parseDeleteFileInput(raw: unknown): DeleteFileInput {
   const hasFilePath = nonEmptyString(filePath)
   const hasSource = nonEmptyString(source)
   if (hasFilePath && hasSource) {
-    throw new McpError(ErrorCode.InvalidParams, 'Provide either filePath or source, not both')
+    throw new ProtocolError(
+      ProtocolErrorCode.InvalidParams,
+      'Provide either filePath or source, not both'
+    )
   }
   if (hasFilePath) {
     return { filePath }
@@ -181,24 +190,33 @@ export function parseDeleteFileInput(raw: unknown): DeleteFileInput {
   if (hasSource) {
     return { source }
   }
-  throw new McpError(ErrorCode.InvalidParams, 'Either filePath or source must be provided')
+  throw new ProtocolError(
+    ProtocolErrorCode.InvalidParams,
+    'Either filePath or source must be provided'
+  )
 }
 
 export function parseReadChunkNeighborsInput(raw: unknown): ReadChunkNeighborsInput {
   const { filePath, source, chunkIndex, before, after } = asRecord(raw, 'read_chunk_neighbors')
   if (!isInteger(chunkIndex) || chunkIndex < 0) {
-    throw new McpError(ErrorCode.InvalidParams, 'chunkIndex must be a non-negative integer')
+    throw new ProtocolError(
+      ProtocolErrorCode.InvalidParams,
+      'chunkIndex must be a non-negative integer'
+    )
   }
   for (const [label, value] of [
     ['before', before],
     ['after', after],
   ] as const) {
     if (value !== undefined && (!isInteger(value) || value < 0)) {
-      throw new McpError(ErrorCode.InvalidParams, `${label} must be a non-negative integer`)
+      throw new ProtocolError(
+        ProtocolErrorCode.InvalidParams,
+        `${label} must be a non-negative integer`
+      )
     }
     if (typeof value === 'number' && value > MAX_NEIGHBOR_COUNT) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
+      throw new ProtocolError(
+        ProtocolErrorCode.InvalidParams,
         `${label} must be between 0 and 50 (got ${value})`
       )
     }
@@ -233,7 +251,7 @@ export function parseSyncStartInput(raw: unknown): SyncStartInput {
   }
 
   if (!nonEmptyString(path)) {
-    throw new McpError(ErrorCode.InvalidParams, 'path must be a non-empty string')
+    throw new ProtocolError(ProtocolErrorCode.InvalidParams, 'path must be a non-empty string')
   }
 
   // Trimmed for the same reason as `scope`: a whitespace-padded path would
@@ -244,7 +262,7 @@ export function parseSyncStartInput(raw: unknown): SyncStartInput {
   // directory, which the caller cannot see. `ingest_file` and `delete_file`
   // already require absolute paths, and the tool description promises one.
   if (!isAbsolute(trimmed)) {
-    throw new McpError(ErrorCode.InvalidParams, 'path must be an absolute path')
+    throw new ProtocolError(ProtocolErrorCode.InvalidParams, 'path must be an absolute path')
   }
 
   return { path: trimmed }
@@ -265,14 +283,14 @@ export function parseSyncStatusInput(raw: unknown): SyncStatusInput {
   const { jobId } = asRecord(raw, 'sync_status')
 
   if (!nonEmptyString(jobId)) {
-    throw new McpError(ErrorCode.InvalidParams, 'jobId must be a non-empty string')
+    throw new ProtocolError(ProtocolErrorCode.InvalidParams, 'jobId must be a non-empty string')
   }
 
   const trimmed = jobId.trim()
 
   if (!JOB_ID_PATTERN.test(trimmed)) {
-    throw new McpError(
-      ErrorCode.InvalidParams,
+    throw new ProtocolError(
+      ProtocolErrorCode.InvalidParams,
       'jobId must be at most 128 characters of hexadecimal digits and dashes'
     )
   }

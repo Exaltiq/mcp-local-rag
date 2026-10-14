@@ -1,4 +1,4 @@
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
+import { ProtocolError, ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EmbeddingError } from '../../embedder/index.js'
 import { FileOperationError, ValidationError } from '../../parser/index.js'
@@ -152,57 +152,57 @@ describe('logError', () => {
 describe('toMcpError type -> code mapping', () => {
   it('maps ValidationError to InvalidParams', () => {
     const result = toMcpError(new ValidationError('bad input'), {})
-    expect(result).toBeInstanceOf(McpError)
-    expect(result.code).toBe(ErrorCode.InvalidParams)
+    expect(result).toBeInstanceOf(ProtocolError)
+    expect(result.code).toBe(ProtocolErrorCode.InvalidParams)
   })
 
   it('maps BaseDirsConfigError to InvalidParams', () => {
     const result = toMcpError(new BaseDirsConfigError('bad config'), {})
-    expect(result.code).toBe(ErrorCode.InvalidParams)
+    expect(result.code).toBe(ProtocolErrorCode.InvalidParams)
   })
 
   it('maps DatabaseError to InternalError', () => {
     const result = toMcpError(new DatabaseError('db broke'), {})
-    expect(result.code).toBe(ErrorCode.InternalError)
+    expect(result.code).toBe(ProtocolErrorCode.InternalError)
   })
 
   it('maps EmbeddingError to InternalError', () => {
     const result = toMcpError(new EmbeddingError('embedder broke'), {})
-    expect(result.code).toBe(ErrorCode.InternalError)
+    expect(result.code).toBe(ProtocolErrorCode.InternalError)
   })
 
   it('maps FileOperationError to InternalError', () => {
     const result = toMcpError(new FileOperationError('io broke'), {})
-    expect(result.code).toBe(ErrorCode.InternalError)
+    expect(result.code).toBe(ProtocolErrorCode.InternalError)
   })
 
   it('maps VlmError to InternalError', () => {
     const result = toMcpError(new VlmError('vlm broke', { pageNum: 1 }), {})
-    expect(result.code).toBe(ErrorCode.InternalError)
+    expect(result.code).toBe(ProtocolErrorCode.InternalError)
   })
 
   it('maps a native Error to InternalError', () => {
     const result = toMcpError(new Error('native'), {})
-    expect(result.code).toBe(ErrorCode.InternalError)
+    expect(result.code).toBe(ProtocolErrorCode.InternalError)
   })
 
   it('maps a non-Error thrown value to InternalError', () => {
     const result = toMcpError('string thrown', {})
-    expect(result.code).toBe(ErrorCode.InternalError)
+    expect(result.code).toBe(ProtocolErrorCode.InternalError)
   })
 
   it('passes an existing McpError through unchanged', () => {
-    const original = new McpError(ErrorCode.InvalidParams, 'already mcp')
+    const original = new ProtocolError(ProtocolErrorCode.InvalidParams, 'already mcp')
     const result = toMcpError(original, { prefix: 'Failed to ingest file' })
     expect(result).toBe(original)
-    expect(result.code).toBe(ErrorCode.InvalidParams)
+    expect(result.code).toBe(ProtocolErrorCode.InvalidParams)
   })
 })
 
 describe('toMcpError type-conditional prefix', () => {
   it('applies the prefix on the generic/native fallback', () => {
     const result = toMcpError(new Error('disk full'), { prefix: 'Failed to ingest file' })
-    expect(result.code).toBe(ErrorCode.InternalError)
+    expect(result.code).toBe(ProtocolErrorCode.InternalError)
     expect(result.message).toContain('Failed to ingest file: disk full')
   })
 
@@ -210,7 +210,7 @@ describe('toMcpError type-conditional prefix', () => {
     const result = toMcpError(new DatabaseError('db broke'), {
       prefix: 'Failed to read chunk neighbors',
     })
-    expect(result.code).toBe(ErrorCode.InternalError)
+    expect(result.code).toBe(ProtocolErrorCode.InternalError)
     expect(result.message).not.toContain('Failed to read chunk neighbors')
     expect(result.message).toContain('db broke')
   })
