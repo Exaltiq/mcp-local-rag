@@ -26,7 +26,12 @@ import { join, resolve } from 'node:path'
 import { ProtocolError, ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { withTestDevice } from '../../__tests__/test-device.js'
-import { expectInstanceOf, parseJson, privateMembers } from '../../__tests__/test-doubles.js'
+import {
+  expectInstanceOf,
+  parseJson,
+  privateMembers,
+  toolsCallContext,
+} from '../../__tests__/test-doubles.js'
 import type { Embedder } from '../../embedder/index.js'
 import type { SyncStatusResult } from '../types.js'
 
@@ -162,7 +167,7 @@ const itWithFifos = fifoSupported() ? it : it.skip
 type DispatchResult = { content: { type: string; text: string }[]; isError?: boolean }
 type RegisteredHandler = (
   request: { method: string; params: { name: string; arguments?: unknown } },
-  extra: { signal: AbortSignal }
+  extra: ReturnType<typeof toolsCallContext>
 ) => Promise<DispatchResult>
 
 /** Invoke the registered CallTool dispatcher closure — the client-facing boundary. */
@@ -173,10 +178,7 @@ function dispatch(server: ServerInstance, name: string, args: unknown): Promise<
   if (handler === undefined) {
     throw new Error('tools/call handler not registered')
   }
-  return handler(
-    { method: 'tools/call', params: { name, arguments: args } },
-    { signal: new AbortController().signal }
-  )
+  return handler({ method: 'tools/call', params: { name, arguments: args } }, toolsCallContext())
 }
 
 function firstBlock(result: DispatchResult): string {

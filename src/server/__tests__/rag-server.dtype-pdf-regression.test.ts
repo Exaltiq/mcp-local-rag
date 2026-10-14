@@ -36,7 +36,7 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { testModelCacheDir, withTestDevice } from '../../__tests__/test-device.js'
-import { expectInstanceOf, privateMembers } from '../../__tests__/test-doubles.js'
+import { expectInstanceOf, privateMembers, toolsCallContext } from '../../__tests__/test-doubles.js'
 
 // ============================================
 // Mocks (hoisted so the doMock factories can reference them)
@@ -77,7 +77,7 @@ let ProtocolErrorCode: typeof import('@modelcontextprotocol/server').ProtocolErr
 type DispatchResult = { content: { type: string; text: string }[] }
 type RegisteredHandler = (
   request: { method: string; params: { name: string; arguments?: unknown } },
-  extra: { signal: AbortSignal }
+  extra: ReturnType<typeof toolsCallContext>
 ) => Promise<DispatchResult>
 
 // Invoke the registered CallTool dispatcher closure directly (the boundary that
@@ -95,10 +95,7 @@ function dispatch(
   if (handler === undefined) {
     throw new Error('tools/call handler not registered')
   }
-  return handler(
-    { method: 'tools/call', params: { name, arguments: args } },
-    { signal: new AbortController().signal }
-  )
+  return handler({ method: 'tools/call', params: { name, arguments: args } }, toolsCallContext())
 }
 
 describe('AC-009: dtype×PDF protocol regression (mock-based, no real model/Hub/cache)', () => {

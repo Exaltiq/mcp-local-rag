@@ -11,7 +11,7 @@ import { resolve } from 'node:path'
 import { ProtocolError, ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { testModelCacheDir, withTestDevice } from '../../__tests__/test-device.js'
-import { expectInstanceOf, privateMembers } from '../../__tests__/test-doubles.js'
+import { expectInstanceOf, privateMembers, toolsCallContext } from '../../__tests__/test-doubles.js'
 import type { Embedder } from '../../embedder/index.js'
 import { EmbeddingError } from '../../embedder/index.js'
 import { BaseDirsConfigError } from '../../utils/base-dirs.js'
@@ -22,7 +22,7 @@ import { RAGServer } from '../index.js'
 type DispatchResult = { content: { type: string; text: string }[]; isError?: boolean }
 type RegisteredHandler = (
   request: { method: string; params: { name: string; arguments?: unknown } },
-  extra: { signal: AbortSignal }
+  extra: ReturnType<typeof toolsCallContext>
 ) => Promise<DispatchResult>
 
 // Typed accessor for the RAGServer internals exercised by these tests. Mirrors
@@ -49,10 +49,7 @@ function dispatch(server: RAGServer, name: string, args: unknown): Promise<Dispa
   if (handler === undefined) {
     throw new Error('tools/call handler not registered')
   }
-  return handler(
-    { method: 'tools/call', params: { name, arguments: args } },
-    { signal: new AbortController().signal }
-  )
+  return handler({ method: 'tools/call', params: { name, arguments: args } }, toolsCallContext())
 }
 
 describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
