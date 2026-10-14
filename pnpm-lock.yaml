@@ -15,10 +15,10 @@ importers:
         specifier: ^0.40.0
         version: 0.40.0(@types/node@26.6.5)(apache-arrow@18.1.0)
       '@modelcontextprotocol/client':
-        specifier: ^2.3.1
+        specifier: 2.3.1
         version: 2.3.1
       '@modelcontextprotocol/server':
-        specifier: ^2.3.1
+        specifier: 2.3.1
         version: 2.3.1
       '@mozilla/readability':
         specifier: 0.6.0
