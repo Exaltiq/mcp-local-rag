@@ -462,9 +462,7 @@ export class RAGServer {
             case 'sync_status':
               return await this.handleSyncStatus(parseSyncStatusInput(request.params.arguments))
             default:
-              // InvalidParams (-32602): the method exists, the tool name does not.
-              // A plain Error would be remapped to InternalError (-32603).
-              throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Unknown tool: ${toolName}`)
+              throw new Error(`Unknown tool: ${toolName}`)
           }
         } catch (error) {
           const context = TOOL_ERROR_CONTEXT[toolName] ?? {}

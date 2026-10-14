@@ -269,6 +269,21 @@ describe('Central dispatcher error mapping (AC-004/005/006/008)', () => {
     const logged = errorSpy.mock.calls.map((c) => c.join(' ')).join('\n')
     expect(logged).toContain('LANCE_INTERNAL_DETAIL')
   })
+
+  it('maps an unknown tool on tools/call to InternalError (-32603)', async () => {
+    await expect(dispatch(server, 'not_a_real_tool', {})).rejects.toMatchObject({
+      code: ProtocolErrorCode.InternalError,
+    })
+    try {
+      await dispatch(server, 'not_a_real_tool', {})
+      throw new Error('expected throw')
+    } catch (e) {
+      const err = expectInstanceOf(e, ProtocolError)
+      expect(err.code).toBe(ProtocolErrorCode.InternalError)
+      expect(err.code).toBe(-32603)
+      expect(err.message).toBe('Unknown tool: not_a_real_tool')
+    }
+  })
 })
 
 // ---- Identity preservation + rollback side-effects (handlers gutted) ----
