@@ -71,8 +71,8 @@ const MOCKED_PATHS = ['@huggingface/transformers', 'mupdf'] as const
 
 let RAGServer: typeof import('../index.js').RAGServer
 let EmbeddingError: typeof import('../../embedder/index.js').EmbeddingError
-let McpError: typeof import('@modelcontextprotocol/sdk/types.js').McpError
-let ErrorCode: typeof import('@modelcontextprotocol/sdk/types.js').ErrorCode
+let ProtocolError: typeof import('@modelcontextprotocol/server').ProtocolError
+let ProtocolErrorCode: typeof import('@modelcontextprotocol/server').ProtocolErrorCode
 
 type DispatchResult = { content: { type: string; text: string }[] }
 type RegisteredHandler = (
@@ -119,7 +119,7 @@ describe('AC-009: dtype×PDF protocol regression (mock-based, no real model/Hub/
     vi.doMock('mupdf', mupdfFactory)
     ;({ RAGServer } = await import('../index.js'))
     ;({ EmbeddingError } = await import('../../embedder/index.js'))
-    ;({ McpError, ErrorCode } = await import('@modelcontextprotocol/server'))
+    ;({ ProtocolError, ProtocolErrorCode } = await import('@modelcontextprotocol/server'))
 
     // Embedder model load fails (e.g. unavailable dtype), and the model's
     // available-dtype enumeration EXCLUDES the requested dtype → the real
@@ -202,10 +202,10 @@ describe('AC-009: dtype×PDF protocol regression (mock-based, no real model/Hub/
       thrown = error
     }
 
-    expect(thrown).toBeInstanceOf(McpError)
-    const err = expectInstanceOf(thrown, McpError)
+    expect(thrown).toBeInstanceOf(ProtocolError)
+    const err = expectInstanceOf(thrown, ProtocolError)
     // Code is InternalError (EmbeddingError kind 'internal').
-    expect(err.code).toBe(ErrorCode.InternalError)
+    expect(err.code).toBe(ProtocolErrorCode.InternalError)
     // The client message carries the REAL enriched dtype text.
     expect(err.message).toContain(expectedEnriched)
     // The original masking symptom is gone: no "Failed to parse PDF" relabel,
