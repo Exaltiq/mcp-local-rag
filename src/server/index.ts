@@ -4,16 +4,9 @@ import { randomUUID } from 'node:crypto'
 import { readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { resolve, sep } from 'node:path'
-import { Server } from '@modelcontextprotocol/sdk/server/index.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import {
-  type Annotations,
-  CallToolRequestSchema,
-  ErrorCode,
-  ListToolsRequestSchema,
-  McpError,
-} from '@modelcontextprotocol/sdk/types.js'
+import type { Annotations, Transport } from '@modelcontextprotocol/server'
+import { ProtocolError, ProtocolErrorCode, Server } from '@modelcontextprotocol/server'
+import { StdioServerTransport } from '@modelcontextprotocol/server/stdio'
 import { DEFAULT_MIN_CHUNK_LENGTH, SemanticChunker } from '../chunker/index.js'
 import type { EmbedderInterface } from '../chunker/semantic-chunker.js'
 import {
@@ -196,7 +189,7 @@ const packageVersion =
  * An `McpError` subclass so the client sees an unchanged code and message,
  * while sync can count it as `empty` rather than as a failed job.
  */
-class NoChunksError extends McpError {}
+class NoChunksError extends ProtocolError {}
 
 /**
  * Render the scanner's coverage facts as warnings — each unobserved region is
@@ -414,7 +407,7 @@ export class RAGServer {
    */
   private setupHandlers(): void {
     // Tool list
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    this.server.setRequestHandler('tools/list', async () => ({
       tools: toolDefinitions,
     }))
 
@@ -423,7 +416,7 @@ export class RAGServer {
     // stderr and maps it for the client. `TOOL_ERROR_CONTEXT` holds each
     // handler's message policy, so that table lives in one place.
     this.server.setRequestHandler(
-      CallToolRequestSchema,
+      'tools/call',
       async (request: { params: { name: string; arguments?: unknown } }) => {
         const toolName = request.params.name
         // The mutation guard sits here, on the external dispatch path only, so
@@ -788,7 +781,7 @@ export class RAGServer {
       const chunkCount = vectorChunks?.length ?? preparedFile?.chunks.length ?? 0
       if (chunkCount === 0) {
         throw new NoChunksError(
-          ErrorCode.InvalidParams,
+          ProtocolErrorCode.InvalidParams,
           `No chunks generated from file: ${args.filePath}. The file may be empty or all content was filtered (minimum ${this.minChunkLength} characters required). Existing data has been preserved.`
         )
       }
@@ -1206,8 +1199,8 @@ export class RAGServer {
   async handleSyncStatus(input: SyncStatusInput): Promise<{ content: RagTextContentBlock[] }> {
     const job = this.syncJob
     if (job === null || job.jobId !== input.jobId) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
+      throw new ProtocolError(
+        ProtocolErrorCode.InvalidParams,
         `Unknown sync job: ${input.jobId}. Only the current or latest job is kept: it is replaced by a newer sync_start and discarded when the server process exits.`
       )
     }

@@ -7,7 +7,7 @@
 
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { ErrorCode } from '@modelcontextprotocol/sdk/types.js'
+import { ProtocolErrorCode } from '@modelcontextprotocol/server'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { testModelCacheDir, withTestDevice } from '../../__tests__/test-device.js'
 import { asDouble, parseJson, privateMembers } from '../../__tests__/test-doubles.js'
@@ -528,7 +528,7 @@ describe('read_chunk_neighbors integration', () => {
           chunkIndex: 5,
           before: -1,
         })
-      ).rejects.toMatchObject({ code: ErrorCode.InvalidParams })
+      ).rejects.toMatchObject({ code: ProtocolErrorCode.InvalidParams })
     })
 
     it('rejects non-integer after with McpError InvalidParams', async () => {
@@ -538,7 +538,7 @@ describe('read_chunk_neighbors integration', () => {
           chunkIndex: 5,
           after: 2.5,
         })
-      ).rejects.toMatchObject({ code: ErrorCode.InvalidParams })
+      ).rejects.toMatchObject({ code: ProtocolErrorCode.InvalidParams })
     })
 
     it('rejects before > 50 with McpError InvalidParams', async () => {
@@ -548,7 +548,7 @@ describe('read_chunk_neighbors integration', () => {
           chunkIndex: 5,
           before: 51,
         })
-      ).rejects.toMatchObject({ code: ErrorCode.InvalidParams })
+      ).rejects.toMatchObject({ code: ProtocolErrorCode.InvalidParams })
     })
   })
 
@@ -590,7 +590,7 @@ describe('read_chunk_neighbors integration', () => {
             filePath: ingestedFilePath,
           })
         )
-      ).rejects.toMatchObject({ code: ErrorCode.InvalidParams })
+      ).rejects.toMatchObject({ code: ProtocolErrorCode.InvalidParams })
     })
 
     it('rejects negative chunkIndex with McpError InvalidParams', async () => {
@@ -599,7 +599,7 @@ describe('read_chunk_neighbors integration', () => {
           filePath: ingestedFilePath,
           chunkIndex: -1,
         })
-      ).rejects.toMatchObject({ code: ErrorCode.InvalidParams })
+      ).rejects.toMatchObject({ code: ProtocolErrorCode.InvalidParams })
     })
   })
 
@@ -694,7 +694,7 @@ describe('read_chunk_neighbors integration', () => {
           chunkIndex: 2,
         })
       ).rejects.toMatchObject({
-        code: ErrorCode.InvalidParams,
+        code: ProtocolErrorCode.InvalidParams,
         message: expect.stringContaining('not both'),
       })
     })
@@ -707,7 +707,7 @@ describe('read_chunk_neighbors integration', () => {
           chunkIndex: 2,
         })
       ).rejects.toMatchObject({
-        code: ErrorCode.InvalidParams,
+        code: ProtocolErrorCode.InvalidParams,
         message: expect.stringContaining('must be provided'),
       })
     })

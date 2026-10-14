@@ -4,14 +4,13 @@
 import { randomUUID } from 'node:crypto'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
+import type { Notification } from '@modelcontextprotocol/client'
 import {
-  ErrorCode,
-  McpError,
-  type Notification,
-  ProgressNotificationSchema,
-} from '@modelcontextprotocol/sdk/types.js'
+  Client,
+  InMemoryTransport,
+  ProtocolError,
+  ProtocolErrorCode,
+} from '@modelcontextprotocol/client'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { testModelCacheDir, withTestDevice } from '../../__tests__/test-device.js'
 import { parseJson, privateMembers } from '../../__tests__/test-doubles.js'
@@ -479,8 +478,8 @@ function namedTool(tools: ListedTool[], name: string): ListedTool {
 }
 
 /** Narrow a caught value to an `McpError`, failing the test for anything else. */
-function asMcpError(error: unknown): McpError {
-  if (!(error instanceof McpError)) {
+function asMcpError(error: unknown): ProtocolError {
+  if (!(error instanceof ProtocolError)) {
     throw new Error(`expected an McpError, received: ${String(error)}`)
   }
   return error
@@ -539,7 +538,7 @@ describe('SYNC-006 / SYNC-007: sync tools over the MCP SDK protocol', () => {
     // explicit progress handler replaces the SDK's built-in one so a progress
     // notification (the historical regression) is recorded rather than absorbed.
     client.fallbackNotificationHandler = record
-    client.setNotificationHandler(ProgressNotificationSchema, record)
+    client.setNotificationHandler('notifications/progress', record)
 
     await Promise.all([
       client.connect(linkedClientTransport),
@@ -727,7 +726,7 @@ describe('SYNC-006 / SYNC-007: sync tools over the MCP SDK protocol', () => {
         .callTool({ name: 'sync_status', arguments: { jobId: replacedJobId } })
         .catch((caught: unknown) => caught)
     )
-    expect(error.code).toBe(ErrorCode.InvalidParams)
+    expect(error.code).toBe(ProtocolErrorCode.InvalidParams)
     expect(error.message).toContain('Unknown sync job')
 
     // The error travelled the ordinary error channel: the session is intact.
@@ -741,7 +740,7 @@ describe('SYNC-006 / SYNC-007: sync tools over the MCP SDK protocol', () => {
         .callTool({ name: 'sync_status', arguments: {} })
         .catch((caught: unknown) => caught)
     )
-    expect(error.code).toBe(ErrorCode.InvalidParams)
+    expect(error.code).toBe(ProtocolErrorCode.InvalidParams)
     expect(error.message).toContain('jobId must be a non-empty string')
 
     const status = await client.callTool({ name: 'status', arguments: {} })

@@ -1,6 +1,6 @@
 // MCP tool schema definitions for RAGServer
 
-import type { Tool } from '@modelcontextprotocol/sdk/types.js'
+import type { Tool } from '@modelcontextprotocol/server'
 import { MAX_NEIGHBOR_COUNT, MAX_QUERY_LIMIT, MIN_QUERY_LIMIT } from '../utils/limits.js'
 import { CONTENT_FORMATS } from '../utils/raw-data-utils.js'
 import { QUALITY_PROFILES } from '../utils/visual-profile.js'
