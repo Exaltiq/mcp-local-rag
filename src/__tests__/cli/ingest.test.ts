@@ -1269,7 +1269,7 @@ describe('CLI ingest', () => {
       try {
         await expect(resolveConfig(globalConfig, {})).rejects.toThrow('process.exit(1)')
         expect(errorSpy).toHaveBeenCalledWith(
-          expect.stringContaining('must be between 1 and 524288000')
+          expect.stringContaining('Invalid MAX_FILE_SIZE value: "0"')
         )
       } finally {
         errorSpy.mockRestore()
@@ -1283,7 +1283,7 @@ describe('CLI ingest', () => {
       try {
         await expect(resolveConfig(globalConfig, {})).rejects.toThrow('process.exit(1)')
         expect(errorSpy).toHaveBeenCalledWith(
-          expect.stringContaining('must be between 1 and 524288000')
+          expect.stringContaining('Invalid MAX_FILE_SIZE value: "-100"')
         )
       } finally {
         errorSpy.mockRestore()
@@ -1297,11 +1297,54 @@ describe('CLI ingest', () => {
       try {
         await expect(resolveConfig(globalConfig, {})).rejects.toThrow('process.exit(1)')
         expect(errorSpy).toHaveBeenCalledWith(
-          expect.stringContaining('must be between 1 and 524288000')
+          expect.stringContaining('Invalid MAX_FILE_SIZE value: "999999999"')
         )
       } finally {
         errorSpy.mockRestore()
       }
+    })
+
+    it.each(['1e8', '0x100000', '100MB', '52428800.9'])(
+      'should error naming MAX_FILE_SIZE when the env var is %s',
+      async (value) => {
+        process.env['MAX_FILE_SIZE'] = value
+        const globalConfig = resolveGlobalConfig({})
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        try {
+          await expect(resolveConfig(globalConfig, {})).rejects.toThrow('process.exit(1)')
+          expect(errorSpy).toHaveBeenCalledWith(
+            expect.stringContaining(`Invalid MAX_FILE_SIZE value: "${value}"`)
+          )
+          expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining('--max-file-size'))
+        } finally {
+          errorSpy.mockRestore()
+        }
+      }
+    )
+
+    it.each(['0', '10001', '50abc', '50.5', '1e2'])(
+      'should error naming CHUNK_MIN_LENGTH when the env var is %s',
+      async (value) => {
+        process.env['CHUNK_MIN_LENGTH'] = value
+        const globalConfig = resolveGlobalConfig({})
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        try {
+          await expect(resolveConfig(globalConfig, {})).rejects.toThrow('process.exit(1)')
+          expect(errorSpy).toHaveBeenCalledWith(
+            expect.stringContaining(`Invalid CHUNK_MIN_LENGTH value: "${value}"`)
+          )
+          expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining('--chunk-min-length'))
+        } finally {
+          errorSpy.mockRestore()
+        }
+      }
+    )
+
+    it('should resolve maxFileSize from a valid MAX_FILE_SIZE env var', async () => {
+      process.env['MAX_FILE_SIZE'] = '1024'
+      const globalConfig = resolveGlobalConfig({})
+      const result = await resolveConfig(globalConfig)
+      expect(result.maxFileSize).toBe(1024)
     })
 
     it('should error when --base-dir CLI option points to sensitive path', async () => {
